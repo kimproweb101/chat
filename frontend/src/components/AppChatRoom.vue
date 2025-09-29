@@ -1,39 +1,84 @@
 <template>
   <div>
     <div>
-      <div>server</div>
-      <div v-for="(message_server, index) in messages_server" :key="index">
-        {{ message_server }}
+      <div>방 선택 {{ rooms }}</div>
+      <div>
+      <label><input type="checkbox" value="1" v-model="rooms"/>방1 </label>
+      <label><input type="checkbox" value="2" v-model="rooms"/>방2 </label>
+      <label><input type="checkbox" value="3" v-model="rooms"/>방3 </label>
       </div>
-    </div>
+      <button @click="enter_chat">전송</button>
+    </div>    
+  </div> 
+  <div>
+    <hr />
+    <div>메시지 전송</div>
+    <div>방 선택 {{ selectedRoom }}</div>
+      <div>
+      <select v-model="selectedRoom">
+        <option value="1">1번방</option>
+        <option value="2">2번방</option>
+        <option value="3">3번방</option>
+      </select>
+      </div>
+      <div>
+        <form @submit.prevent="send_message()">
+          <input type="text" v-model="message">
+          <button>전송</button>
+        </form>
+      </div>
   </div>
   <div>
-    <input type="text" v-model="message" @keyup.enter="sendMessage" />
-    <button @click="sendMessage">전송</button>
-  </div>
+    <hr />
+      <div>server</div>
+      <div v-for="(message_server, index) in messages_server" :key="index">
+        
+        {{ message_server.socket }} : {{ message_server.message }}
+      </div>
+    </div>
 </template>
 
 <script setup>
 import { ref } from 'vue'
 import { io } from 'socket.io-client'
 
-const messages_server = ref([])
-const message = ref('')
-
 const socket = io('http://localhost:3000/chats')
-
 socket.on('connect', () => {
   console.log('연결 성공:', socket.id)
 })
 
-socket.on('send_message', (msg) => {
+const rooms=ref([])
+const enter_chat=()=>{
+  if(rooms.value.length === 0) return
+  socket.emit('enter_chat', rooms.value)  
+}
+
+const message=ref('')
+const selectedRoom=ref()
+const messages_server=ref([])
+const send_message=()=>{
+  const data={
+    "message": message.value,
+    "chatId": parseInt(selectedRoom.value)
+  }
+  socket.emit('send_message', data)
+  message.value=null  
+}
+
+socket.on('send_message', (msg) => {  
+  console.log('send_message')
+  console.log(msg)
+  // messages_server.value.push(msg)
+})
+
+socket.on('receive_message', (msg) => {
+  console.log('receive_message')
+  console.log(msg)
   messages_server.value.push(msg)
 })
 
-const sendMessage = () => {
-  socket.emit('send_message', message.value)
-  message.value = ''
-}
+
+
 </script>
 
 <style scoped>

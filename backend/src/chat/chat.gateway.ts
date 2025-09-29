@@ -1,4 +1,5 @@
 import {
+  ConnectedSocket,
   MessageBody,
   OnGatewayConnection,
   SubscribeMessage,
@@ -8,21 +9,36 @@ import {
 import { Socket, Server } from 'socket.io';
 
 @WebSocketGateway({
-  cors: { origin: '*' },
+  cors: {
+    origin: '*',
+  },
   namespace: 'chats',
 })
 export class ChatsGateway implements OnGatewayConnection {
-  @WebSocketServer() server?: Server;
+  @WebSocketServer() server: Server;
 
   handleConnection(socket: Socket) {
-    if (!socket) return;
-    console.log(`클라이언트 연결됨: ${socket.id}`);
+    console.log(`클라이언트 연결됨: ${socket.id}`);    
   }
 
+  @SubscribeMessage('enter_chat')
+  enterChat(
+    @MessageBody() data: number[],
+    @ConnectedSocket() socket: Socket,
+  ){
+    console.log('enterChat')
+    console.log(data)    
+    for(const chatId of data){
+      socket.join(chatId.toString());
+    }
+  }
+
+
   @SubscribeMessage('send_message')
-  sendMessage(@MessageBody() message: string) {
-    console.log(`받은 메시지: ${message}`);
-    this.server?.emit('send_message', message);
-    return message;
+  sendMessage(
+    @MessageBody() message:{message:string, chatId:number},
+    @ConnectedSocket() socket:Socket,
+  ) {
+   this.server.in(message.chatId.toString()).emit('receive_message', {message:message.message, socket: socket.id})
   }
 }
