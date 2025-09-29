@@ -38,7 +38,8 @@ export class ChatsGateway implements OnGatewayConnection {
   sendMessage(
     @MessageBody() message:{message:string, chatId:number},
     @ConnectedSocket() socket:Socket,
-  ) {
-   this.server.in(message.chatId.toString()).emit('receive_message', {message:message.message, socket: socket.id})
+  ) {    
+  //  this.server.in(message.chatId.toString()).emit('receive_message', {message:message.message, socket: socket.id})
+  socket.to(message.chatId.toString()).emit('receive_message', {message:message.message, socket: socket.id})
   }
 }

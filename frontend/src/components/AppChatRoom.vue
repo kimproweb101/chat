@@ -76,9 +76,6 @@ socket.on('receive_message', (msg) => {
   console.log(msg)
   messages_server.value.push(msg)
 })
-
-
-
 </script>
 
 <style scoped>
